@@ -1,3 +1,6 @@
+import org.gradle.kotlin.dsl.release
+import java.util.Properties
+import kotlin.apply
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,6 +11,18 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
 }
+
+
+val dotenv = Properties().apply {
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile.inputStream().use { load(it) }
+    }
+}
+
+fun env(name: String): String? =
+    System.getenv(name) ?: dotenv.getProperty(name)
+
 
 android {
     namespace = "com.kin.athena"
@@ -52,12 +67,37 @@ android {
             buildConfigField("String", "KOFI_URL", "\"https://ko-fi.com/s/b127ca6671\"")
         }
     }
+
+    signingConfigs {
+        create("release") {
+            val keystore = env("KEYSTORE_FILE")
+            val storePass = env("KEYSTORE_PASSWORD")
+            val alias = env("KEY_ALIAS")
+            val keyPass = env("KEY_PASSWORD")
+
+            if (
+                !keystore.isNullOrBlank() &&
+                !storePass.isNullOrBlank() &&
+                !alias.isNullOrBlank() &&
+                !keyPass.isNullOrBlank()
+            ) {
+                storeFile = file(keystore)
+                storePassword = storePass
+                keyAlias = alias
+                keyPassword = keyPass
+
+            } else {
+                println("WARNING: Release signingConfig not fully configured.")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = false

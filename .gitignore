@@ -76,3 +76,6 @@ render.experimental.xml
 
 # Generated native libraries
 app/libs/
+
+.env
+athena.keystore
