@@ -197,7 +197,7 @@ class SettingsViewModel @Inject constructor(
         val result = preferenceUseCases.loadSettings.execute()
         result.fold(
             ifSuccess = { loadedSettings ->
-                _settings.value = loadedSettings
+                _settings.value = loadedSettings.copy(premiumUnlocked = true)
                 defaultRoute = loadedSettings.defaultRoute
             }
         )
